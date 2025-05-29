@@ -4,22 +4,24 @@ import folium
 from streamlit_folium import st_folium
 import os
 
+# 페이지 설정 (최상단에 위치해야 함)
 st.set_page_config(page_title="도시 침수 예경보 모델", layout="wide")
 
 st.title("도시 침수 예경보 모델")
 
-# 현재 작업 디렉토리 및 파일 목록 출력 (디버그용)
+# 현재 작업 디렉토리와 파일 목록 출력 (디버그용)
 st.write("현재 작업 디렉토리:", os.getcwd())
 st.write("현재 폴더 내 파일 목록:", os.listdir())
 
-# 변경된 엑셀 파일명
+# 엑셀 파일명 (변경된 이름)
 excel_file = "gangnam_flood_analysis.xlsx"
 
-# 절대 경로 확인 및 존재 여부 출력
+# 엑셀 파일 절대 경로 및 존재 여부 확인
 excel_path = os.path.abspath(excel_file)
 st.write("절대 경로:", excel_path)
 st.write("파일 존재 여부:", os.path.isfile(excel_path))
 
+# 파일이 없으면 에러 메시지와 함께 중단
 if not os.path.isfile(excel_file):
     st.error(f"❌ 기본 예제 파일도 존재하지 않습니다. '{excel_file}' 파일을 업로드해주세요.")
     st.stop()
@@ -33,7 +35,7 @@ df.columns = df.columns.str.strip()
 st.write("업로드된 엑셀 파일 컬럼명:")
 st.write(df.columns.tolist())
 
-# 필요한 컬럼 체크
+# 필요한 컬럼 리스트
 required_cols = ['위도', '경도', 'cluster', '감성분류', 'risk_level', '내용']
 missing_cols = [col for col in required_cols if col not in df.columns]
 
@@ -43,8 +45,10 @@ if missing_cols:
 
 # 지도 생성
 m = folium.Map(location=[37.4979, 127.0276], zoom_start=13)
+
 cluster_colors = {0: 'blue', 1: 'green', 2: 'purple'}
 
+# 데이터 행마다 원형 마커 생성
 for _, row in df.dropna(subset=['cluster', '위도', '경도']).iterrows():
     popup_text = (
         f"<b>📌 클러스터:</b> {row['cluster']}<br>"
@@ -62,4 +66,5 @@ for _, row in df.dropna(subset=['cluster', '위도', '경도']).iterrows():
         tooltip=f"Cluster {row['cluster']} / 위험도 {row['risk_level']}"
     ).add_to(m)
 
+# Streamlit에서 Folium 지도 보여주기
 st_folium(m, width=700, height=500)
