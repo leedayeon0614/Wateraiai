@@ -4,33 +4,36 @@ import folium
 from streamlit_folium import st_folium
 import os
 
-# 1. 앱 기본 설정 (반드시 최상단에 위치)
 st.set_page_config(page_title="도시 침수 예경보 모델", layout="wide")
 
 st.title("도시 침수 예경보 모델")
 
-# 2. 현재 작업 디렉토리 및 파일 확인 (디버그용)
+# 현재 작업 디렉토리 및 파일 목록 출력 (디버그용)
 st.write("현재 작업 디렉토리:", os.getcwd())
 st.write("현재 폴더 내 파일 목록:", os.listdir())
 
-# 3. 엑셀 파일 경로
-excel_file = "강남침수_감성분석_결과.xlsx"
+# 변경된 엑셀 파일명
+excel_file = "gangnam_flood_analysis.xlsx"
 
-# 4. 엑셀 파일 존재 여부 확인
+# 절대 경로 확인 및 존재 여부 출력
+excel_path = os.path.abspath(excel_file)
+st.write("절대 경로:", excel_path)
+st.write("파일 존재 여부:", os.path.isfile(excel_path))
+
 if not os.path.isfile(excel_file):
     st.error(f"❌ 기본 예제 파일도 존재하지 않습니다. '{excel_file}' 파일을 업로드해주세요.")
     st.stop()
 
-# 5. 엑셀 파일 읽기
+# 엑셀 파일 읽기
 df = pd.read_excel(excel_file, engine="openpyxl")
 
-# 6. 컬럼명 공백 제거
+# 컬럼명 공백 제거
 df.columns = df.columns.str.strip()
 
 st.write("업로드된 엑셀 파일 컬럼명:")
 st.write(df.columns.tolist())
 
-# 7. 필요한 컬럼이 모두 있는지 확인
+# 필요한 컬럼 체크
 required_cols = ['위도', '경도', 'cluster', '감성분류', 'risk_level', '내용']
 missing_cols = [col for col in required_cols if col not in df.columns]
 
@@ -38,9 +41,8 @@ if missing_cols:
     st.error(f"데이터에 다음 컬럼이 없습니다: {missing_cols} 엑셀 파일 컬럼명을 확인해주세요.")
     st.stop()
 
-# 8. 지도 생성
+# 지도 생성
 m = folium.Map(location=[37.4979, 127.0276], zoom_start=13)
-
 cluster_colors = {0: 'blue', 1: 'green', 2: 'purple'}
 
 for _, row in df.dropna(subset=['cluster', '위도', '경도']).iterrows():
@@ -60,5 +62,4 @@ for _, row in df.dropna(subset=['cluster', '위도', '경도']).iterrows():
         tooltip=f"Cluster {row['cluster']} / 위험도 {row['risk_level']}"
     ).add_to(m)
 
-# 9. Streamlit에 지도 표시
 st_folium(m, width=700, height=500)
